@@ -24,7 +24,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1 class="holographic-text">Enter Your Beaded Era</h1>
-            <p>One-of-a-kind treasures, hand-beaded with obsessive detail by Paige.</p>
+            <p>A Bubblegum universe of handmade beaded treasures, made to sparkle, pop, and feel like main character energy.</p>
             <a href="#shop" class="glossy-btn">Shop the Collection</a>
         </div>
     </section>
@@ -68,43 +68,51 @@
     </footer>
 
     <script>
-        const products = [
-            { name: "Cozy Girl Club Earrings", price: 40.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/CXV5JJHD5QU5IZ7KBL63WGCS.png?width=640" },
-            { name: "Tropical Cuties Fish", price: 40.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/TICB6LXJFFQIQKLSRUEC4XXY.png?width=640" },
-            { name: "Main Character Fish", price: 160.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/2UPTYAAR7SUVWANTKLQDNAUB.png?width=640" },
-            { name: "Spooky Sweetheart Tote", price: 130.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/GG2XOD7VKQRU5CIZF5NOFKLW.png?width=640" },
-            { name: "Sweetheart Knit Drops", price: 45.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/SSZ6U6DSHLT5G6RD3SZ3XRL4.png?width=640" },
-            { name: "Soft Glam Sisters", price: 40.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/CLDWE6WXTAT2WX4TIW6FZZF4.png?width=640" },
-            { name: "Sweet Talker Bag", price: 130.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/PUJ6IIZT4XILG3COKJB6XMPM.png?width=640" },
-            { name: "City Girl Dolls", price: 40.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/LMAKLR5VOP7RK3LG2XTS7EHZ.png?width=640" },
-            { name: "Honey Glow Bag", price: 650.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/LG2IWWZRJIHBLSMXF3DPMEOK.png?width=640" },
-            { name: "Bubblegum Reef Fish", price: 40.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/N3O7L4SUQY5WZKWJBQIW547H.png?width=640" },
-            { name: "Dress Girls Earrings", price: 40.00, img: "https://154878483.cdn6.editmysite.com/uploads/1/5/4/8/154878483/7FAC6FGYVIC7UWQ3S4LU5MTS.png?width=640" }
-        ];
+        const SHEET_ID = '1m-hYqWplPPyjgYI0KjZ_MUagDph19jGgE5o6VKLmX4Q'; 
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-        const grid = document.getElementById('shop');
-        let cartCount = 0;
+        async function loadProducts() {
+            const grid = document.getElementById('shop');
+            
+            try {
+                const response = await fetch(SHEET_URL);
+                const text = await response.text();
+                // Clean up the Google JSON response
+                const json = JSON.parse(text.substring(47).slice(0, -2));
+                const rows = json.table.rows;
 
-        products.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.innerHTML = `
-                <div class="product-img-wrapper">
-                    <img src="${p.img}" alt="${p.name}">
-                </div>
-                <div class="product-info">
-                    <h3>${p.name}</h3>
-                    <p class="price">$${p.price.toFixed(2)}</p>
-                    <button class="add-to-cart">Add to Cart</button>
-                </div>
-            `;
-            card.querySelector('.add-to-cart').onclick = () => {
-                cartCount++;
-                document.getElementById('cart-count').innerText = cartCount;
-                alert(`${p.name} added to cart!`);
-            };
-            grid.appendChild(card);
-        });
+                grid.innerHTML = ''; // Clear loading text
+
+                rows.forEach(row => {
+                    const name = row.c[0] ? row.c[0].v : 'Product';
+                    const price = row.c[1] ? row.c[1].v : 0;
+                    const img = row.c[2] ? row.c[2].v : '';
+                    const status = row.c[3] ? row.c[3].v : 'Available';
+
+                    const card = document.createElement('div');
+                    card.className = `product-card ${status.toLowerCase().replace(' ', '-')}`;
+                    card.innerHTML = `
+                        <div class="product-img-wrapper">
+                            ${status !== 'Available' ? `<span class="badge">${status}</span>` : ''}
+                            <img src="${img}" alt="${name}">
+                        </div>
+                        <div class="product-info">
+                            <h3>${name}</h3>
+                            <p class="price">$${Number(price).toFixed(2)}</p>
+                            <button class="add-to-cart" ${status !== 'Available' ? 'disabled' : ''}>
+                                ${status === 'Available' ? 'Add to Cart' : 'Out of Stock'}
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error loading products:', error);
+                grid.innerHTML = '<p>Error loading treasures. Please check your Spreadsheet settings!</p>';
+            }
+        }
+
+        loadProducts();
     </script>
 </body>
 </html>
